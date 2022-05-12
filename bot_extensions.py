@@ -1,103 +1,153 @@
-import requests
-import json
-from bot_config import currency, url_get
+# Created by .ignore support plugin (hsz.mobi)
+### Python template
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# исключения при вводе пользователя
-class APIException(Exception):
-    pass
+# C extensions
+*.so
 
-# класс с методами бота
-class BotExtensions:
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 
-    # вытаскиваем ключ бота из скрытого файла
-    @staticmethod
-    def get_token():
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
 
-        with open('data\Token') as t:
-            return (t.read())
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
 
-    # вывод в сообщение текста доступных валют
-    @staticmethod
-    def get_values():
+# Translations
+*.mo
+*.pot
 
-        reply = "Доступные валюты (допускается ввод в произвольном регистре):\n"
-        for k in currency.values():
-            reply += '\n' + '\t' + ' - '.join(k)
+# Django stuff:
+*.log
+local_settings.py
 
-        return(reply)
+# Flask stuff:
+instance/
+.webassets-cache
 
+# Scrapy stuff:
+.scrapy
 
-    # проверки данных от пользователя, обработка исключений и вывод текста
-    @staticmethod
-    def process_data(values: str):
+# Sphinx documentation
+docs/_build/
 
-        extxt = f'\nВведите команду в следующем формате:\n ' \
-                f'<имя валюты цену которой нужно узнать> <имя валюты в которой надо узнать цену> <количество валюты> (USD RUB 1000)\n' \
-                f'Допускается не указывать количество (USD RUB)\n\n' \
-                f'список доступных валют можно узнать по команде /values'
+# PyBuilder
+target/
 
-        values = values.split()
+# IPython Notebook
+.ipynb_checkpoints
 
-        if len(values) < 2:
-            raise APIException(f'"Параметров должно быть не менее двух"\n'
-                               f'Например USD EUR')
-        elif len(values) > 3:
-            raise APIException(f'"Параметров слишком много"' + extxt)
+# pyenv
+.python-version
 
-        elif len(values) == 2:
-            values += '1'
+# celery beat schedule file
+celerybeat-schedule
 
-        quote, base, amount = values
+# dotenv
+.env
 
-        quote_r, base_r = '', ''
+# virtualenv
+venv/
+ENV/
 
-        for k, v in currency.items():
+# Spyder project settings
+.spyderproject
 
-            if quote.upper() in v:
-                quote_r = k
+# Rope project settings
+.ropeproject
+### VirtualEnv template
+# Virtualenv
+# http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+.venv
+pip-selfcheck.json
+### JetBrains template
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
-            if base.upper() in v:
-                base_r = k
+# User-specific stuff:
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
 
-        if quote_r == '':
-            raise APIException(f'"Не удалось обработать валюту {quote}"' + extxt)
+# Sensitive or high-churn files:
+.idea/dataSources.ids
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
 
-        if base_r == '':
-            raise APIException(f'"Не удалось обработать валюту {base}"' + extxt)
+# Gradle:
+.idea/gradle.xml
+.idea/libraries
 
-        if quote_r == base_r:
-            raise APIException(f'"Введены одинаковые валюты {quote} {base}"' + extxt)
+# Mongo Explorer plugin:
+.idea/mongoSettings.xml
 
-        try:
-            amount = abs(float(amount.replace(',', '.')))
+.idea/
 
-        except:
-            raise APIException(f'"Не удалось обработать количество {amount}"' + extxt)
+## File-based project format:
+*.iws
 
-        total = BotExtensions.get_price(quote_r, base_r, amount)
+## Plugin-specific files:
 
-        reply = f'{amount} {quote} = {round(total, 9)} {base}'
+# IntelliJ
+/out/
 
-        return reply
+# mpeltonen/sbt-idea plugin
+.idea_modules/
 
+# JIRA plugin
+atlassian-ide-plugin.xml
 
-    # возвращает нужную сумму в валюте
-    @staticmethod
-    def get_price(quote: str, base: str, amount: float):
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
 
-        try:
-            req = requests.get(url_get[0] + quote + url_get[1] + base)
-
-        except:
-            raise Exception(f'"Сервер не отвечает"\n'
-                               f'Попробуйте повторить запрос позже.\n')
-
-        try:
-            total = json.loads(req.content)[base] * amount
-
-        except:
-            raise Exception(f'"Неожиданный ответа сервера: {json.loads(req.content)}"\n'
-                               f'Попробуйте повторить запрос позже.\n')
-
-        return total
+/data/
